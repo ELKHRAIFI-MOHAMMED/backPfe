@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import UserSerializerSignUp,AssociationProfileSignUp,CitoyenProfileSignUp
+from login_app.serializers import UserSerializerSignUp,AssociationProfileSignUp,CitoyenProfileSignUp
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import *
+from login_app.models import  *
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from django.core.validators import validate_email
@@ -18,6 +18,9 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 import json
+import os
+import uuid
+from datetime import datetime
 
 
 
@@ -126,10 +129,20 @@ class SignUpAssociationView(generics.CreateAPIView):
                 status=status.HTTP_403_FORBIDDEN
                 )
             
-            
+        files = request.FILES.getlist('logo') # récupère les fichiers envoyés
+        logo = []
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        for image_file in files:
+            ext = os.path.splitext(image_file.name)[1]  # ex: ".jpg"
+            unique_id = uuid.uuid4().hex[:8]
+            new_filename = f"media/logos/{timestamp}_{unique_id}{ext}"
+            path = default_storage.save(f'logos/{new_filename}', image_file)
+            logo.append(path) 
         data = request.data.copy()
         data["user"] = userConnecte.id
         data['feedback'] = json.dumps([])
+        if len(logo)!=0:
+            data["logo"]=str(logo[0])
         
         serializer = self.get_serializer(data=data, context={'request': request})
         if not serializer.is_valid():
@@ -156,6 +169,36 @@ class AssociationProfileUpdateView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         # Récupère le profil de l'association de l'utilisateur connecté
         return get_object_or_404(AssociationProfile, user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        profile = AssociationProfile.objects.get(user=request.user)
+        data = request.data.copy()
+
+        # Vérifie s'il y a un nouveau fichier "logo" envoyé
+        new_logo_files = request.FILES.getlist('logo')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if new_logo_files:
+            # Supprimer l'ancien logo du dossier si présent
+            if profile.logo and default_storage.exists(profile.logo):
+                default_storage.delete(profile.logo)
+
+            # Enregistrer le nouveau logo
+            new_logo_file = new_logo_files[0]
+            ext = os.path.splitext(new_logo_file.name)[1]  # ex: ".jpg"
+            unique_id = uuid.uuid4().hex[:8]
+            new_filename = f"media/logos/{timestamp}_{unique_id}{ext}"
+            path = default_storage.save(f'logos/{new_filename}', new_logo_file)
+            data['logo'] = str(path)
+            
+
+        serializer = self.get_serializer(profile, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({
+            "message": "Profil mis à jour avec succès.",
+            "logo": serializer.data.get("logo")
+        })
 
 
 class SignUpCitoyenView(generics.CreateAPIView):
@@ -212,7 +255,7 @@ class CitoyenProfileUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = CitoyenProfileSignUp
     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
+    def get_object(self, request):
         # Récupère le profil de l'association de l'utilisateur connecté
         return get_object_or_404(CitoyenProfile, user=self.request.user)
 

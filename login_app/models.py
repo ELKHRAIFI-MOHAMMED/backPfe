@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 class User(AbstractUser):
     class UserType(models.TextChoices):
@@ -22,8 +23,8 @@ class AssociationProfile(models.Model):
     nom = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     contact = models.CharField(max_length=255)
-    logo = models.ImageField(upload_to='logos/', blank=True, null=True)
-    reseaux_sociaux = models.JSONField(blank=True, null=True)  # ou TextField selon ta préférence
+    logo = models.TextField(blank=True, null=True)
+    reseaux_sociaux = models.JSONField(blank=True, null=True) 
     feedback =models.TextField(blank=True, null=True)
 
     def __str__(self):
@@ -62,7 +63,7 @@ class Annonce(models.Model):
     type = models.CharField(max_length=20, choices=AnnonceType.choices)
     date_debut = models.DateTimeField()
     date_fin = models.DateTimeField()
-    association = models.ForeignKey(AssociationProfile, on_delete=models.CASCADE, related_name='annonces')
+    id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='annonces')
     categorie = models.ForeignKey(Categorie, on_delete=models.SET_NULL, null=True, related_name='annonces')
     date_creation = models.DateTimeField(auto_now_add=True)
 

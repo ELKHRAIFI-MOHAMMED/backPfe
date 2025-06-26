@@ -46,7 +46,8 @@ class AssociationProfileSignUp(serializers.ModelSerializer):
             'logo': {'required': False, 'allow_null': True},
             'reseaux_sociaux': {'required': False},
             'feedback': {'required': False, 'allow_null': True},
-            'user': {'required': False}
+            'user': {'required': False},
+            'contact': {'required': False}
         }
     
     
@@ -98,6 +99,8 @@ class CitoyenProfileSignUp(serializers.ModelSerializer):
             'user': {'required': False, 'allow_null': True},
             'feedback': {'required': False, 'allow_null': True},
             'album_photos': {'required': False, 'allow_null': True},
+            'bio': {'required': False, 'allow_null': True},
+            'experiences': {'required': False, 'allow_null': True},
         }
 
     def validate(self, data):
@@ -111,13 +114,15 @@ class CitoyenProfileSignUp(serializers.ModelSerializer):
     def create(self, validated_data):
         feedback = validated_data.get('feedback', []) or []
         album_photos = validated_data.get('album_photos', []) or []
+        bio = validated_data.get('bio', "") or ""
+        experiences = validated_data.get('experiences', "") or ""
 
         citoyen = CitoyenProfile.objects.create(
             user=validated_data['user'],
             nom=validated_data['nom'],
             prenom=validated_data['prenom'],
-            bio=validated_data['bio'],
-            experiences=validated_data['experiences'],
+            bio=bio,
+            experiences=experiences,
             album_photos=album_photos,
             feedback=feedback
         )
@@ -131,3 +136,33 @@ class CitoyenProfileSignUp(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+class CategorieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categorie
+        fields = '__all__'
+
+
+
+class AnnonceSerializer(serializers.ModelSerializer):
+    date_debut = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:%M",
+        input_formats=["%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"]
+    )
+    date_fin = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:%M",
+        input_formats=["%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"]
+    )
+    id_user = serializers.StringRelatedField(read_only=True)  # affichage uniquement
+
+    class Meta:
+        model = Annonce
+        fields = '__all__'
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        annonce = Annonce.objects.create(
+            id_user=user,  # <-- on utilise directement l'utilisateur connecté
+            **validated_data
+        )
+        return annonce
