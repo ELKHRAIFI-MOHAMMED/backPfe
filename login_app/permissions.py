@@ -45,7 +45,7 @@ class OnlyAssociationCreate(BasePermission):
         if not user or not user.is_authenticated:
             return False
         
-        if not (user.id==obj.id_user) and request.method in ['PUT']:
+        if not (user.id==obj.user) and request.method in ['PUT']:
             return False
         
         if user.type == "ADMIN":

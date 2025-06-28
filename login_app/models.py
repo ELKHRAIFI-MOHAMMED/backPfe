@@ -19,6 +19,7 @@ class User(AbstractUser):
 
 
 class AssociationProfile(models.Model):
+    id = models.IntegerField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='association_profile')
     nom = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -32,6 +33,7 @@ class AssociationProfile(models.Model):
 
 
 class CitoyenProfile(models.Model):
+    id = models.IntegerField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='citoyen_profile')
     prenom = models.CharField(max_length=100)
     nom = models.CharField(max_length=100)
@@ -55,7 +57,7 @@ class Annonce(models.Model):
     class AnnonceType(models.TextChoices):
         EVENEMENT = "EVENEMENT", _("Évènement")
         DON = "DON", _("Don")
-        APPEL_BENEVOLAT = "APPEL_BENEVOLAT", _("Appel Bénévolat")
+        APPEL_BENEVOLAT = "APPEL_BENEVOLAT", _("Appel au bénévolat")
 
     titre = models.CharField(max_length=255)
     description = models.TextField()
@@ -63,12 +65,37 @@ class Annonce(models.Model):
     type = models.CharField(max_length=20, choices=AnnonceType.choices)
     date_debut = models.DateTimeField()
     date_fin = models.DateTimeField()
-    id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='annonces')
-    categorie = models.ForeignKey(Categorie, on_delete=models.SET_NULL, null=True, related_name='annonces')
+    
+    # Relation directe avec AssociationProfile
+    association = models.ForeignKey(
+        'AssociationProfile',  # Utilisation du nom du modèle comme string
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,  # Permet un champ vide dans les formulaires
+        related_name='annonces',
+        verbose_name=_("Association")
+    )
+    
+    # Catégorie de l'annonce
+    categorie = models.ForeignKey(
+        'Categorie',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='annonces',
+        verbose_name=_("Catégorie")
+    )
+    
     date_creation = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = _("Annonce")
+        verbose_name_plural = _("Annonces")
+        ordering = ['-date_creation']
+
     def __str__(self):
-        return self.titre
+        return f"{self.titre} - {self.association.nom if self.association else 'Sans association'}"
+
 
 
 class Candidature(models.Model):
@@ -77,15 +104,32 @@ class Candidature(models.Model):
         ACCEPTEE = "ACCEPTEE", _("Acceptée")
         REFUSEE = "REFUSEE", _("Refusée")
 
-    citoyen = models.ForeignKey(CitoyenProfile, on_delete=models.CASCADE, related_name='candidatures')
-    annonce = models.ForeignKey(Annonce, on_delete=models.CASCADE, related_name='candidatures')
-    statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.EN_ATTENTE)
+    
+    
+    citoyen = models.ForeignKey(
+    'CitoyenProfile',
+    on_delete=models.CASCADE,
+    null=True,  # ou default=1 (ID d'un citoyen existant)
+)
+
+    annonce = models.ForeignKey(
+        'Annonce',
+        on_delete=models.CASCADE,
+        related_name='candidatures'
+    )
+
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.EN_ATTENTE
+    )
+
     message = models.TextField()
     date_candidature = models.DateTimeField(auto_now_add=True)
     note_engagement = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
-        return f"Candidature de {self.citoyen} pour {self.annonce}"
+        return f"Candidature de {self.user} pour {self.annonce}"
 
 
 class Message(models.Model):

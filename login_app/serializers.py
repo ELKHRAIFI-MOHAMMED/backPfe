@@ -41,13 +41,14 @@ class AssociationProfileSignUp(serializers.ModelSerializer):
     
     class Meta:
         model = AssociationProfile
-        fields = ("user", 'nom', 'description', 'contact', 'logo', 'reseaux_sociaux', 'feedback')
+        fields = ("id","user", 'nom', 'description', 'contact', 'logo', 'reseaux_sociaux', 'feedback')
         extra_kwargs = {
             'logo': {'required': False, 'allow_null': True},
             'reseaux_sociaux': {'required': False},
             'feedback': {'required': False, 'allow_null': True},
             'user': {'required': False},
-            'contact': {'required': False}
+            'contact': {'required': False},
+            'id': {'required': False}
         }
     
     
@@ -61,7 +62,9 @@ class AssociationProfileSignUp(serializers.ModelSerializer):
         if feedback_data is None:
             feedback_data = []
             
+            
         associationProfile = AssociationProfile.objects.create(
+            id=self.context['request'].user.id,
             user=validated_data['user'],
             nom=validated_data['nom'],
             description=validated_data.get('description', ''),
@@ -118,6 +121,7 @@ class CitoyenProfileSignUp(serializers.ModelSerializer):
         experiences = validated_data.get('experiences', "") or ""
 
         citoyen = CitoyenProfile.objects.create(
+            id=self.context['request'].user.id,
             user=validated_data['user'],
             nom=validated_data['nom'],
             prenom=validated_data['prenom'],
@@ -153,16 +157,36 @@ class AnnonceSerializer(serializers.ModelSerializer):
         format="%Y-%m-%dT%H:%M",
         input_formats=["%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"]
     )
-    id_user = serializers.StringRelatedField(read_only=True)  # affichage uniquement
-
+    
+    association = serializers.SerializerMethodField()
     class Meta:
         model = Annonce
         fields = '__all__'
+        
+    def get_association(self, obj):
+        try:
+            profile = self.context['request'].user.association_profile  # 🔁 Corrigé ici
+            return AssociationProfileSignUp(profile).data
+        except AssociationProfile.DoesNotExist:
+            return None
 
     def create(self, validated_data):
-        user = self.context['request'].user
+        association = self.context['request'].user.association_profile  # 🔁 Corrigé ici
         annonce = Annonce.objects.create(
-            id_user=user,  # <-- on utilise directement l'utilisateur connecté
+            association=association,
             **validated_data
         )
         return annonce
+    
+class CandidatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Candidature
+        fields = '__all__'
+        read_only_fields = ['date_candidature']  # champ auto
+
+    def create(self, validated_data):
+        citoyen = self.context['request'].user.citoyen_profile
+        return Candidature.objects.create(citoyen=citoyen,**validated_data)
+    
+    
+    
