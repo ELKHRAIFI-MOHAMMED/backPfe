@@ -164,11 +164,12 @@ class AnnonceSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
     def get_association(self, obj):
-        try:
-            profile = self.context['request'].user.association_profile  # 🔁 Corrigé ici
-            return AssociationProfileSignUp(profile).data
-        except AssociationProfile.DoesNotExist:
-            return None
+      try:
+        # On récupère directement l'association liée à cette annonce
+        profile = obj.association
+        return AssociationProfileSignUp(profile).data if profile else None
+      except AssociationProfile.DoesNotExist:
+        return None
 
     def create(self, validated_data):
         association = self.context['request'].user.association_profile  # 🔁 Corrigé ici
@@ -183,10 +184,14 @@ class CandidatureSerializer(serializers.ModelSerializer):
         model = Candidature
         fields = '__all__'
         read_only_fields = ['date_candidature']  # champ auto
+        extra_kwargs = {
+            'note_engagement': {'required': False, 'allow_null': True}
+        }
 
     def create(self, validated_data):
         citoyen = self.context['request'].user.citoyen_profile
         return Candidature.objects.create(citoyen=citoyen,**validated_data)
     
+
     
     

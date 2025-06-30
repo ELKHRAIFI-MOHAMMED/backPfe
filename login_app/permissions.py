@@ -29,13 +29,13 @@ class OnlyAssociationCreate(BasePermission):
             return False
 
         if user.type == "ADMIN":
-            return request.method in ['DELETE', 'PUT', 'GET','POST']
+            return request.method in ['DELETE','GET']
 
         if user.type == "CITOYEN":
             return request.method in SAFE_METHODS
 
         if user.type == "ASSOCIATION":
-            return request.method in ['POST', 'GET']
+            return request.method in ['DELETE', 'PUT', 'GET','POST']
 
         return False
 
@@ -45,18 +45,94 @@ class OnlyAssociationCreate(BasePermission):
         if not user or not user.is_authenticated:
             return False
         
-        if not (user.id==obj.user) and request.method in ['PUT']:
-            return False
         
         if user.type == "ADMIN":
-            return request.method in ['DELETE', 'PUT', 'GET']
+            return request.method in ['DELETE','GET']
+        
+        if (user.id!=obj.association.user.id) :
+            return request.method in SAFE_METHODS
+        
 
         if user.type == "CITOYEN":
             return request.method in SAFE_METHODS
 
         if user.type == "ASSOCIATION":
-            if obj.date_debut < datetime.now(timezone.utc):
-                return request.method in ['DELETE', 'POST', 'GET']
+            # if obj.date_debut < datetime.now(timezone.utc):
+            #     return request.method in ['DELETE', 'POST', 'GET']
             return True
 
         return False
+
+
+
+class CandidaturePermission(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.type == "ADMIN":
+            return request.method in ['DELETE', 'PUT', 'GET']
+
+        if user.type == "CITOYEN":
+            return request.method in ["POST"]
+
+        if user.type == "ASSOCIATION":
+            return False
+
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        
+        
+        if user.type == "ADMIN":
+            return request.method in ['DELETE', 'PUT', 'GET']
+
+        if user.type == "CITOYEN":
+            return request.method in ["POST"]
+
+        if user.type == "ASSOCIATION":
+            return False
+        
+        return False
+    
+
+class CandidaturePermissionCandA(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.type == "ADMIN":
+            return False
+
+        if user.type == "CITOYEN":
+            return request.method in ["GET","DELETE","PUT"]
+
+        if user.type == "ASSOCIATION":
+            return request.method in ["GET","PUT"]
+
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        
+        
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.type == "ADMIN":
+            return False
+
+        if user.type == "CITOYEN":
+            return request.method in ["GET","DELETE","PUT"]
+
+        if user.type == "ASSOCIATION":
+            return request.method in ["GET","PUT"]
+        
+        False
+
+    
