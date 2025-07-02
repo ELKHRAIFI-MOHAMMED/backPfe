@@ -192,6 +192,32 @@ class CandidatureSerializer(serializers.ModelSerializer):
         citoyen = self.context['request'].user.citoyen_profile
         return Candidature.objects.create(citoyen=citoyen,**validated_data)
     
+    
+    
+    
+class UserSerializer(serializers.ModelSerializer):
+    user_type = serializers.CharField(source='get_type_display')
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'user_type']
+        read_only_fields = fields
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    receiver = UserSerializer(read_only=True)
+    is_own = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Message
+        fields = ['id', 'sender', 'receiver', 'contenu', 'date_envoi', 'is_own']
+        read_only_fields = fields
+
+    def get_is_own(self, obj):
+        request = self.context.get('request')
+        return request and obj.sender == request.user
+    
+    
 
     
     

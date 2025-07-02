@@ -1,16 +1,21 @@
-"""
-ASGI config for PFE_BackEnd project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
-"""
-
 import os
-
+import django
 from django.core.asgi import get_asgi_application
 
+# Configuration initiale CRUCIALE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'PFE_BackEnd.settings')
+django.setup()  # Initialise explicitement Django
 
-application = get_asgi_application()
+# Maintenant vous pouvez importer les autres composants
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from login_app.routing import websocket_urlpatterns
+
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            websocket_urlpatterns
+        )
+    ),
+})
