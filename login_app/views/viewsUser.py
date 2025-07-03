@@ -289,5 +289,11 @@ class UserStatusView(APIView):
         except User.DoesNotExist:
             return Response(
                 {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+                status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+def get_all_associations(request):
+    associations = AssociationProfile.objects.all()
+    serializer = AssociationProfileSignUp(associations, many=True)
+    return Response(serializer.data)

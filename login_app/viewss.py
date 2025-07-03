@@ -2,8 +2,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .models import Message
-from .serializers import UserSerializer, MessageSerializer
+from .models import *
+from .serializers import UserSerializer, MessageSerializer,UserSerializer1,AssociationProfileSignUp
 from rest_framework.views import APIView
 from django.db.models import Q
 
@@ -32,11 +32,23 @@ class UserListView(generics.ListAPIView):
 
 class UserDetailView(generics.RetrieveAPIView):
     """
-    Détails d'un utilisateur spécifique
+    Détails d'un utilisateur spécifique avec jointure conditionnelle au profil
     """
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserSerializer1
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        user = self.get_object()
+        
+        # Précharger les profils selon le type d'utilisateur
+        if user.type == 'ASSOCIATION':
+            context['association_profile'] = AssociationProfile.objects.filter(user=user).first()
+        elif user.type == 'CITOYEN':
+            context['citoyen_profile'] = CitoyenProfile.objects.filter(user=user).first()
+            
+        return context
 
 class MessageHistoryView(generics.ListAPIView):
     """

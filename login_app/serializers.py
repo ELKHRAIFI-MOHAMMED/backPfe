@@ -200,7 +200,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'user_type']
+        fields = ['id', 'username', 'email', 'user_type','is_active']
         read_only_fields = fields
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -220,4 +220,21 @@ class MessageSerializer(serializers.ModelSerializer):
     
 
     
-    
+class UserSerializer1(serializers.ModelSerializer):
+    profile = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'type', 'is_active', 'profile']
+
+    def get_profile(self, obj):
+        context = self.context
+        request = self.context.get('request')
+        
+        if obj.type == 'ASSOCIATION' and 'association_profile' in context:
+            return AssociationProfileSignUp(context['association_profile']).data
+            
+        elif obj.type == 'CITOYEN' and 'citoyen_profile' in context:
+            return CitoyenProfileSignUp(context['citoyen_profile']).data
+            
+        return None

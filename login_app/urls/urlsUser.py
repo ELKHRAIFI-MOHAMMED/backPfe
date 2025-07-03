@@ -9,5 +9,6 @@ urlpatterns = [
     path('signup/citoyen/', viewsUser.SignUpCitoyenView.as_view(), name='signUpcitoyen'),
     path('login/', viewsUser.LoginView.as_view(), name='login'),
     path('me/', viewsUser.UserDetailView.as_view(), name='user-detail'),
-    path('activate/<int:user_id>/', viewsUser.UserStatusView.as_view(), name='toggle_user_status')
+    path('activate/<int:user_id>/', viewsUser.UserStatusView.as_view(), name='toggle_user_status'),
+     path('association/', viewsUser.get_all_associations, name='get_all_association'),
 ]
