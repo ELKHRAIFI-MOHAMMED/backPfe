@@ -3,7 +3,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from .models import *
-from .serializers import UserSerializer, MessageSerializer,UserSerializer1,AssociationProfileSignUp
+from .serializers import UserSerializer, MessageSerializer,UserSerializer1,AssociationProfileSignUp,Associationwithuser,CitoyenSerializers
 from rest_framework.views import APIView
 from django.db.models import Q
 
@@ -93,3 +93,47 @@ class CurrentUserView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+    
+
+class ListeAssociations(generics.ListAPIView):
+    queryset = AssociationProfile.objects.all().select_related('user')
+    serializer_class = Associationwithuser
+
+from django.http import HttpResponse
+
+from django.shortcuts import get_object_or_404
+
+def activeroudesactiverAssociation(request,idasso):
+    associ = get_object_or_404(
+        AssociationProfile.objects.select_related('user'),
+        id=idasso
+    )
+    if associ.user.is_active == True:
+        associ.user.is_active = False
+        associ.user.save()
+        return HttpResponse('L\'association a ete desactivée avec success')
+    else:
+        associ.user.is_active = True
+        associ.user.save()
+        return HttpResponse('L\'association a ete activée avec success')
+def activeroudesactivercitoyen(request,idcit):
+    citoyen = get_object_or_404(
+        CitoyenProfile.objects.select_related('user'),
+        id=idcit
+    )
+    if citoyen.user.is_active == True:
+        citoyen.user.is_active = False
+        citoyen.user.save()
+        return HttpResponse('Le citoyen a ete desactivée avec success')
+    else:
+        citoyen.user.is_active = True
+        citoyen.user.save()
+        return HttpResponse('Le citoyen a ete activée avec success')
+    
+class listcitoyen(generics.ListAPIView):
+    queryset = CitoyenProfile.objects.all().select_related('user')
+    serializer_class = CitoyenSerializers
+
+class userActif(generics.ListAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserSerializer

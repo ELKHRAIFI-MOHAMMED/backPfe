@@ -9,4 +9,9 @@ urlpatterns = [
     # Messages
     path('messages/<int:user_id>/', viewss.MessageHistoryView.as_view(), name='message-history'),
     path('messages/<int:user_id>/send/', viewss.MessageCreateView.as_view(), name='message-send'),
+    path('association-with-users/', viewss.ListeAssociations.as_view(), name='association-with-user'),
+    path('citoyens/', viewss.listcitoyen.as_view(), name='listcitoyen'),
+    path('activer-ou-desactiver-Association/<idasso>', viewss.activeroudesactiverAssociation, name='activeroudesactiverAssociation'),
+    path('list-user/', viewss.userActif.as_view(), name='listuser'),
+    path('activer-ou-desactiver-citoyen/<idcit>', viewss.activeroudesactivercitoyen, name='activeroudesactivercitoyen'),
 ]

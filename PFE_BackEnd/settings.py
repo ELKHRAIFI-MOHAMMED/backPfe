@@ -95,7 +95,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3000",
-    # Add your frontend URLs here
 ]
 ROOT_URLCONF = 'PFE_BackEnd.urls'
 
@@ -134,7 +133,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',  # MySQL backend
         'NAME': 'PFE',          # Name of the database
         'USER': 'root',         # MySQL username
-        'PASSWORD': 'root',     # MySQL password
+        'PASSWORD': '',     # MySQL password
         'HOST': 'localhost',                   # MySQL host
         'PORT': '3306',                        # MySQL port
     }

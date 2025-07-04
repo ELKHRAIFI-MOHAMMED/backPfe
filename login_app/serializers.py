@@ -238,3 +238,15 @@ class UserSerializer1(serializers.ModelSerializer):
             return CitoyenProfileSignUp(context['citoyen_profile']).data
             
         return None
+
+
+class Associationwithuser(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True);
+    class Meta:
+        model = AssociationProfile
+        fields = '__all__'
+class CitoyenSerializers(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True);
+    class Meta:
+        model = CitoyenProfile
+        fields = '__all__'
