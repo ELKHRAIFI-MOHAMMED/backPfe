@@ -26,4 +26,4 @@ urlpatterns = [
    path('api/', include('login_app.urls.urlsAnnonce')),
    path('api/', include('login_app.urls.urlsCandidature')),
    path('api/', include('login_app.urlss')),
-] + static(settings.MEDIA_URL, document_rootA=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
